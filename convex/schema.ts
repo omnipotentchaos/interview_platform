@@ -19,6 +19,8 @@ export default defineSchema({
     streamCallId: v.string(),
     candidateId: v.string(),
     interviewerIds: v.array(v.string()),
+    isStarted: v.optional(v.boolean()), // New field to track if meeting has been started
+    actualStartTime: v.optional(v.number()), // New field to track when meeting was actually started
   })
     .index("by_candidate_id", ["candidateId"])
     .index("by_stream_call_id", ["streamCallId"]),

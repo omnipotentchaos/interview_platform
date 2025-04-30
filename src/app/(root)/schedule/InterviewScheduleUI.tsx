@@ -22,13 +22,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import UserInfo from "@/components/UserInfo";
-import { Loader2Icon, XIcon } from "lucide-react";
+import { Loader2Icon, Trash2Icon, TrashIcon, XIcon } from "lucide-react";
 import CustomCalendar from "@/components/ui/CustomCalendar";
 import { TIME_SLOTS } from "@/constants";
 import MeetingCard from "@/components/MeetingCard";
 
 function InterviewScheduleUI() {
   const client = useStreamVideoClient();
+  const deleteInterview = useMutation(api.interviews.deleteInterview);
+  const updateStatus = useMutation(api.interviews.updateInterviewStatus);
+  const startInterview = useMutation(api.interviews.startInterview);
   const { user } = useUser();
   const [open, setOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
@@ -131,13 +134,35 @@ function InterviewScheduleUI() {
     (i) => !formData.interviewerIds.includes(i.clerkId)
   );
 
+  const handleStartMeeting = async (interview) => {
+    try {
+      if (!client) {
+        toast.error("Stream client not ready");
+        return;
+      }
+
+      // First update the interview status in the database
+      await startInterview({ id: interview._id });
+
+      // Then join the call
+      const call = client.call("default", interview.streamCallId);
+      await call.join();
+
+      // Redirect to the meeting page
+      window.location.href = `/meeting/${interview.streamCallId}`;
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to start meeting");
+    }
+  };
+
   return (
     <div className="container max-w-7xl mx-auto p-6 space-y-8">
       <div className="flex items-center justify-between">
         {/* HEADER INFO */}
         <div>
           <h1 className="text-3xl font-bold">Interviews</h1>
-          <p className="text-muted-foreground mt-1">Schedule and manage interviews</p>
+          <p className="text-xl text-muted-foreground mt-1">Schedule and manage interviews</p>
         </div>
 
         {/* DIALOG */}
@@ -236,24 +261,20 @@ function InterviewScheduleUI() {
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Date</label>
                   <CustomCalendar
-  selectedDate={formData.date}
-  onSelect={(date) => setFormData({ ...formData, date })}
-/>
-
+                    selectedDate={formData.date}
+                    onSelect={(date) => setFormData({ ...formData, date })}
+                  />
                 </div>
 
                 {/* TIME */}
-
-                {/* TIME */}
-<div className="space-y-2">
-  <label className="text-sm font-medium">Time</label>
-  <Input
-    type="time"
-    value={formData.time}
-    onChange={(e) => setFormData({ ...formData, time: e.target.value })}
-  />
-</div>
-
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Time</label>
+                  <Input
+                    type="time"
+                    value={formData.time}
+                    onChange={(e) => setFormData({ ...formData, time: e.target.value })}
+                  />
+                </div>
               </div>
 
               {/* ACTION BUTTONS */}
@@ -286,7 +307,68 @@ function InterviewScheduleUI() {
         <div className="spacey-4">
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {interviews.map((interview) => (
-              <MeetingCard key={interview._id} interview={interview} />
+              <div key={interview._id} className="relative group">
+                <MeetingCard interview={interview} />
+
+                {/* Show Start Now button for upcoming interviews */}
+                {(interview.status === "upcoming" || interview.isStarted) && (
+                  <Button
+                    className="absolute bottom-2 right-2"
+                    size="sm"
+                    variant={interview.isStarted ? "outline" : "default"}
+                    onClick={() => handleStartMeeting(interview)}
+                  >
+                    {interview.isStarted ? "Join Meeting" : "Start Now"}
+                  </Button>
+                )}
+
+                {/* Delete Confirmation Dialog */}
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button
+                      variant="destructive"
+                      size="icon"
+                      className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition"
+                    >
+                      <Trash2Icon className="h-4 w-4" />
+                    </Button>
+                  </DialogTrigger>
+
+                  <DialogContent className="max-w-sm">
+                    <DialogHeader>
+                      <DialogTitle>Delete Interview?</DialogTitle>
+                    </DialogHeader>
+                    <p className="text-sm text-muted-foreground">
+                      Are you sure you want to delete this interview? This action is irreversible.
+                    </p>
+                    <form
+                      onSubmit={async (e) => {
+                        e.preventDefault();
+                        try {
+                          await deleteInterview({ id: interview._id });
+                          toast.success("Interview deleted");
+                        } catch (error) {
+                          console.error(error);
+                          toast.error("Failed to delete interview");
+                        }
+                      }}
+                    >
+                      <div className="flex justify-end gap-2 pt-4">
+                        {/* Close Dialog on Cancel */}
+                        <DialogTrigger asChild>
+                          <Button type="button" variant="outline" autoFocus>
+                            Cancel
+                          </Button>
+                        </DialogTrigger>
+                        {/* Confirm Delete on Enter key */}
+                        <Button type="submit" variant="destructive">
+                          Confirm Delete
+                        </Button>
+                      </div>
+                    </form>
+                  </DialogContent>
+                </Dialog>
+              </div>
             ))}
           </div>
         </div>

@@ -91,3 +91,13 @@ export const getMeetingStatus = (interview: Interview) => {
   if (isBefore(now, interviewStartTime)) return "upcoming";
   return "completed";
 };
+
+export function getUserInfo(users: any[], userId: string) {
+  const user = users.find((u) => u.clerkId === userId);
+  return {
+    name: user?.name ?? "Unknown",
+    image: user?.image ?? "",
+    initials: user?.name?.[0] ?? "?",
+  };
+}
+

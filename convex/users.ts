@@ -23,16 +23,41 @@ export const syncUser = mutation({
   },
 });
 
-export const getUsers = query({
-  handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("User is not authenticated");
+// New mutation to create a user with a specific role
+export const createUserWithRole = mutation({
+  args: {
+    name: v.string(),
+    email: v.string(),
+    clerkId: v.string(),
+    image: v.optional(v.string()),
+    role: v.union(v.literal("candidate"), v.literal("interviewer")),
+  },
+  handler: async (ctx, args) => {
+    const existingUser = await ctx.db
+      .query("users")
+      .filter((q) => q.eq(q.field("clerkId"), args.clerkId))
+      .first();
 
-    const users = await ctx.db.query("users").collect();
+    if (existingUser) {
+      // Update the existing user with the new role
+      return await ctx.db.patch(existingUser._id, {
+        role: args.role
+      });
+    }
 
-    return users;
+    // Create a new user with the specified role
+    return await ctx.db.insert("users", {
+      ...args
+    });
   },
 });
+
+export const getUsers = query({
+  handler: async (ctx) => {
+    return await ctx.db.query("users").collect();
+  },
+});
+
 
 export const getUserByClerkId = query({
   args: { clerkId: v.string() },
