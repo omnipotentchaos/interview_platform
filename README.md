@@ -1,4 +1,4 @@
-<video src="https://raw.githubusercontent.com/omnipotentchaos/interview_platform/main/video.mp4" controls width="600"></video>
+[Watch demo video](https://raw.githubusercontent.com/omnipotentchaos/interview_platform/main/video.mp4)
 
 
 
