@@ -1,4 +1,4 @@
-[Watch demo video]([https://raw.githubusercontent.com/omnipotentchaos/interview_platform/main/video.mp4](https://drive.google.com/file/d/1PFoCV-3fLVZrikv6EqBZHEqzvCzCfGPG/view?usp=sharing))
+[Watch demo video](https://drive.google.com/file/d/1PFoCV-3fLVZrikv6EqBZHEqzvCzCfGPG/view?usp=sharing)
 
 
 
