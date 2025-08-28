@@ -1,4 +1,5 @@
-<video src="/video.mp4" controls width="600"></video>
+<video src="https://github.com/omnipotentchaos/interview_platform/blob/main/video.mp4?raw=true" controls width="600"></video>
+
 
 
 
